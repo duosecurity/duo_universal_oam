@@ -1,0 +1,43 @@
+<Plugin name="DuoPlugin" type="Authentication">
+  <author>Duo Security</author>
+ <email>support@duosecurity.com</email>
+  <creationDate>12:00:00 2021-01-20</creationDate>
+  <description>Custom OAM Plugin for Duo Security</description>
+  <configuration>
+    <AttributeValuePair>
+        <Attribute type="string" length="20">ikey</Attribute>
+        <mandatory>true</mandatory>
+        <instanceOverride>false</instanceOverride>
+        <globalUIOverride>true</globalUIOverride>
+        <value></value>
+    </AttributeValuePair>
+    <AttributeValuePair>
+        <Attribute type="string" length="40">skey</Attribute>
+        <mandatory>true</mandatory>
+        <instanceOverride>false</instanceOverride>
+        <globalUIOverride>true</globalUIOverride>
+        <value></value>
+    </AttributeValuePair>
+    <AttributeValuePair>
+        <Attribute type="string" length="40">host</Attribute>
+        <mandatory>true</mandatory>
+        <instanceOverride>false</instanceOverride>
+        <globalUIOverride>true</globalUIOverride>
+        <value></value>
+    </AttributeValuePair>
+    <!--<AttributeValuePair>
+        <Attribute type="string" length="6">Fail mode</Attribute>
+        <mandatory>true</mandatory>
+        <instanceOverride>false</instanceOverride>
+        <globalUIOverride>true</globalUIOverride>
+        <value></value>
+    </AttributeValuePair> -->
+    <!-- <AttributeValuePair>
+        <Attribute type="string" length="150">User Store</Attribute>
+        <mandatory>false</mandatory>
+        <instanceOverride>false</instanceOverride>
+        <globalUIOverride>true</globalUIOverride>
+        <value></value>
+    </AttributeValuePair> -->
+  </configuration>
+</Plugin>
