@@ -1,6 +1,6 @@
 <Plugin name="DuoPlugin" type="Authentication">
   <author>Duo Security</author>
- <email>support@duosecurity.com</email>
+  <email>support@duosecurity.com</email>
   <creationDate>12:00:00 2021-01-20</creationDate>
   <description>Custom OAM Plugin for Duo Security</description>
   <configuration>
@@ -20,6 +20,13 @@
     </AttributeValuePair>
     <AttributeValuePair>
         <Attribute type="string" length="40">host</Attribute>
+        <mandatory>true</mandatory>
+        <instanceOverride>false</instanceOverride>
+        <globalUIOverride>true</globalUIOverride>
+        <value></value>
+    </AttributeValuePair>
+    <AttributeValuePair>
+        <Attribute type="string" length="150">Redirect URL</Attribute>
         <mandatory>true</mandatory>
         <instanceOverride>false</instanceOverride>
         <globalUIOverride>true</globalUIOverride>

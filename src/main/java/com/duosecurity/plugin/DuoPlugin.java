@@ -36,8 +36,10 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
     private static final String IKEY_PARAM = "ikey";
     private static final String SKEY_PARAM = "skey";
     private static final String HOST_PARAM = "host";
+    private static final String REDIRECT_PARAM = "Redirect URL";
     // private static final String STORE_PARAM = "User Store";
     // private static final String FAILMODE = "Fail mode";
+    private static final String SESSION_STATE = "duoState";
     private static final String CREDENTIAL_NAME_CODE = "duo_code";
     private static final String CREDENTIAL_NAME_STATE = "state";
 
@@ -49,14 +51,16 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
     // Regex-syntax string, indicating the things to remove during sanitization of a string
     private static final String SANITIZING_PATTERN = "[^A-Za-z0-9_@.]";
 
+    // Initialization parameters
     String ikey = null;
     String skey = null;
     String host = null;
-    String username = null;
+    String redirectUrl = null;
     // String failmode = null;
     // String userStore = null;
+
     private Client duoClient;
-    private String duoState;
+    String username = null;
 
     @Override
     public ExecutionStatus initialize(final PluginConfig config) throws IllegalArgumentException {
@@ -68,21 +72,26 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
             this.ikey = (String) config.getParameter(IKEY_PARAM);
             this.skey = (String) config.getParameter(SKEY_PARAM);
             this.host = (String) config.getParameter(HOST_PARAM);
+            this.redirectUrl = (String) config.getParameter(REDIRECT_PARAM);
+            // TODO re-enable failmode and user store options
             // this.failmode = config.getParameter(FAILMODE).toString().toLowerCase();
             // String configuredStore = (String) config.getParameter(STORE_PARAM);
             // if (configuredStore != null && !configuredStore.equals("")) {
             //     this.userStore = configuredStore;
             // }
-            this.duoClient = new Client(this.ikey, this.skey, this.host, "TODO");
-            this.duoClient.appendUserAgentInfo("TODO");
+            // TODO any validation on redirect URL?
+            this.duoClient = new Client(this.ikey, this.skey, this.host, this.redirectUrl);
+
+            // TODO user agent string
+            // this.duoClient.appendUserAgentInfo("TODO");
         } catch (Exception error) {
             LOGGER.log(Level.SEVERE,
-                       "Null value not allowed for required parameter",
+                       "Error initializing Duo plugin",
                        error);
-            throw new IllegalArgumentException("Null value not allowed for "
-                                               + "required parameter");
+            throw new IllegalArgumentException("Could not initialize Duo Plugin with provided parameters");
         }
 
+        // TODO logging
         // LOGGER.log(Level.INFO, "Fail mode is set to: " + sanitizeForLogging(this.failmode));
 
         return ExecutionStatus.SUCCESS;
@@ -100,20 +109,22 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         CredentialParam param = context.getCredential().getParam(CREDENTIAL_NAME_CODE);
 
         if ((param == null) || (param.getValue() == null) || (param.getValue().toString().length() == 0)) {
-            LOGGER.log(Level.INFO, "Duo phase 1 starting"); // TODO fixup
+            LOGGER.log(Level.INFO, "Duo phase 1 starting");
             // We didn't have a duo code, this is probably the first time through the plugin
-            // TODO log things
 
             // TODO health check and failmode considerations will go here later
 
             status = ExecutionStatus.PAUSE;
 
-            this.duoState = duoClient.generateState();
+            // Generate state and store it in the OAM session
+            String duoState = duoClient.generateState();
+            PluginResponse duoStateSession = new PluginResponse(SESSION_STATE, duoState, PluginAttributeContextType.SESSION);
+            context.addResponse(duoStateSession);
 
+            // Generate the auth URL to send the user to
             String authUrl;
-
             try {
-                authUrl = duoClient.createAuthUrl(this.username, this.duoState);
+                authUrl = duoClient.createAuthUrl(this.username, duoState);
             } catch (Exception error) {
                 LOGGER.log(Level.SEVERE,
                         "An exception occurred while "
@@ -125,6 +136,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
             }
             LOGGER.log(Level.INFO, "Generated auth url " + authUrl);
 
+            // Tell OAM to redirect the user
             UserContextData codeResponseContext = new UserContextData(CREDENTIAL_NAME_CODE, CREDENTIAL_NAME_CODE, new CredentialMetaData((PluginConstants.PASSWORD)));
             UserContextData stateResponseContext = new UserContextData(CREDENTIAL_NAME_STATE, CREDENTIAL_NAME_STATE, new CredentialMetaData((PluginConstants.PASSWORD)));
             UserContextData urlContext = new UserContextData(authUrl, new CredentialMetaData("URL"));
@@ -144,18 +156,32 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
             // We got a duo code, so we need to validate it
             LOGGER.log(Level.INFO, "Duo phase 2 starting");
 
+            // Get the expected parameters
+            // TODO handle missing params
             CredentialParam codeParam = context.getCredential().getParam(CREDENTIAL_NAME_CODE);
             String duoCode = codeParam.getValue().toString();
-            LOGGER.log(Level.INFO, "Got duo code " + duoCode); // TODO remove
+            // TODO remove this log in real code
+            LOGGER.log(Level.INFO, "Got Duo code " + duoCode);
             CredentialParam stateParam = context.getCredential().getParam(CREDENTIAL_NAME_STATE);
             String duoState = stateParam.getValue().toString();
 
-            // TODO check that state matches
+            // Get the original state from the session
+            // TODO handle missing
+            String contextState = context.getResponse(PluginAttributeContextType.SESSION, "duoState").getValue().toString();
 
+            // TODO remove this log in real code
+            LOGGER.log(Level.INFO, "Comparing context state " + contextState + " to received state " + duoState);
+            if (!duoState.equals(contextState)) {
+                LOGGER.log(Level.SEVERE, "State validation was unsuccessful");
+                this.updatePluginResponse(context);
+                return ExecutionStatus.FAILURE;
+            }
+
+            // Exchange the code for the auth token from Duo
             try {
               Token duoToken = duoClient.exchangeAuthorizationCodeFor2FAResult(duoCode, this.username);
-              LOGGER.log(Level.INFO, "Got and validated duo token successfully");
-              // This will raise if the username doesn't match but is there anything we want to check?
+              LOGGER.log(Level.INFO, "Got and validated Duo token successfully");
+              // TODO This will raise if the username doesn't match but is there anything we want to check?
             } catch (Exception error) {
                 LOGGER.log(Level.SEVERE,
                            "An exception occurred while "
@@ -174,7 +200,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
 
     }
 
-    /**  TODO will need to do mostly the same, but for the health check
+    /**  TODO will need to do mostly the same thing, but for the health check
     private Response sendPreAuthRequest() throws Exception {
         Http request = new Http("POST", this.host, "/auth/v2/preauth",
                 MAX_TIMEOUT);
@@ -269,6 +295,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
     }
 
     private void updatePluginResponse(final AuthenticationContext context) {
+        // TODO figure out what in here is unnecessary
         String retAttrs[] = (String[]) null;
 
         String userName = getUserName(context);
