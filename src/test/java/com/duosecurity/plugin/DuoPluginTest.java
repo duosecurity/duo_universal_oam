@@ -1,7 +1,16 @@
-package com.duosecurity;
+package com.duosecurity.plugin;
+
+import java.util.Map;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+import org.junit.Test;
+import java.lang.reflect.*;
+import org.junit.*;
+import static org.junit.Assert.*;
 
 public class DuoPluginTest {
-/**
     DuoPlugin duoPlugin;
 
     @Before
@@ -14,6 +23,7 @@ public class DuoPluginTest {
         // duoPlugin.failmode = "secure";
     }
 
+    /**
     @Test
     public void testPerformPreauth_whenFailmodeSecure() {
         duoPlugin.failmode = "secure";
@@ -22,8 +32,9 @@ public class DuoPluginTest {
         } catch (Exception e) {
             fail("Unexpected exception thrown.");
         }
-    }
+    } **/
 
+    /**
     @Test
     public void testPerformPreauth_whenFailmodeSafeAndDuoUnreachable() {
         duoPlugin.failmode = "safe";
@@ -32,8 +43,9 @@ public class DuoPluginTest {
         } catch (Exception e) {
             fail("Unexpected exception thrown.");
         }
-    }
+    } **/
 
+    /**
     @Test
     public void testPerformPreauth_whenFailmodeInvalid() {
         duoPlugin.failmode = "invalidfailmode";
@@ -45,7 +57,7 @@ public class DuoPluginTest {
         } catch (Exception e) {
             fail("Expected IllegalArgumentException thrown.");
         }
-    }
+    } **/
 
     @Test
     public void testGetDescription() {
@@ -147,5 +159,5 @@ public class DuoPluginTest {
         String actualResult = DuoPlugin.sanitizeForLogging(testString);
 
         assertEquals(expectedResult, actualResult);
-    } **/
+    }
 }
