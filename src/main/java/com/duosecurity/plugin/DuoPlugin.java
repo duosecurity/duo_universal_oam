@@ -155,6 +155,14 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         LOGGER.log(Level.INFO, "Generated auth url " + authUrl);
 
         // Tell OAM to redirect the user
+        this.issueRedirect(context, authUrl);
+
+        LOGGER.log(Level.INFO, "Duo phase 1 complete, redirecting");
+        this.updatePluginResponse(context);
+        return ExecutionStatus.PAUSE;
+    }
+
+    void issueRedirect(AuthenticationContext context, String authUrl) {
         UserContextData codeResponseContext = new UserContextData(CREDENTIAL_NAME_CODE, CREDENTIAL_NAME_CODE, new CredentialMetaData((PluginConstants.PASSWORD)));
         UserContextData stateResponseContext = new UserContextData(CREDENTIAL_NAME_STATE, CREDENTIAL_NAME_STATE, new CredentialMetaData((PluginConstants.PASSWORD)));
         UserContextData urlContext = new UserContextData(authUrl, new CredentialMetaData("URL"));
@@ -163,13 +171,9 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         actionContext.getContextData().add(stateResponseContext);
         actionContext.getContextData().add(urlContext);
 
-        LOGGER.log(Level.INFO, "Duo phase 1 complete, redirecting");
         UserActionMetaData userAction = UserActionMetaData.REDIRECT_GET;
         UserAction action = new UserAction(actionContext, userAction);
         context.setAction(action);
-        this.updatePluginResponse(context);
-
-        return ExecutionStatus.PAUSE;
     }
 
     /**
@@ -187,17 +191,15 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         // Get the expected parameters
         // TODO handle missing params
         String duoCode = codeParam.getValue().toString();
-        // TODO remove this log in real code
+        // TODO remove this log in real code or maybe only long partial
         LOGGER.log(Level.INFO, "Got Duo code " + duoCode);
-        CredentialParam stateParam = context.getCredential().getParam(CREDENTIAL_NAME_STATE);
-        String duoState = stateParam.getValue().toString();
+
+        // Get the state sent by Duo
+        String duoState = this.getStateFromRequest(context);
 
         // Get the original state from the session
-        // TODO handle missing
-        String contextState = context.getResponse(PluginAttributeContextType.SESSION, "duoState").getValue().toString();
+        String contextState = this.getStateFromSession(context);
 
-        // TODO remove this log in real code
-        LOGGER.log(Level.INFO, "Comparing context state " + contextState + " to received state " + duoState);
         if (!duoState.equals(contextState)) {
             LOGGER.log(Level.SEVERE, "State validation was unsuccessful");
             this.updatePluginResponse(context);
@@ -222,6 +224,19 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         this.updatePluginResponse(context);
         
         return ExecutionStatus.SUCCESS;
+    }
+
+    String getStateFromRequest(AuthenticationContext context) {
+        CredentialParam stateParam = context.getCredential().getParam(CREDENTIAL_NAME_STATE);
+        String duoState = stateParam.getValue().toString();
+        // TODO handle missing or null at each step
+        return duoState;
+    }
+
+    String getStateFromSession(AuthenticationContext context) {
+        String contextState = context.getResponse(PluginAttributeContextType.SESSION, SESSION_STATE).getValue().toString();
+        // TODO handle missing or null at each step
+        return contextState;
     }
 
     /**  TODO will need to do mostly the same thing, but for the health check
