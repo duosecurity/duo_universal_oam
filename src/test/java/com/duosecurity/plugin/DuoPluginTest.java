@@ -94,7 +94,7 @@ public class DuoPluginTest {
     public void testGetUserAgent() {
         String ua = duoPlugin.getUserAgent();
         assertNotNull(ua);
-        assertTrue(ua.toLowerCase().contains("duo_oam/"));
+        assertTrue(ua.toLowerCase().contains("duo_universal_oam/"));
         assertTrue(ua.toLowerCase().contains("java.version"));
         assertTrue(ua.toLowerCase().contains("os.name"));
         assertTrue(ua.toLowerCase().contains("os.arch"));

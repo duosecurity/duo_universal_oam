@@ -91,7 +91,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
             throw new IllegalArgumentException("Could not initialize Duo Plugin with provided parameters");
         }
 
-        // TODO logging
+        // TODO logging at CONFIG level
         // LOGGER.log(Level.INFO, "Fail mode is set to: " + sanitizeForLogging(this.failmode));
 
         return ExecutionStatus.SUCCESS;
@@ -101,103 +101,127 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
     public ExecutionStatus process(final AuthenticationContext context) throws AuthenticationException {
 
         LOGGER.log(Level.INFO, "Duo plugin starting");
-        UserActionMetaData userAction = null;
         ExecutionStatus status = ExecutionStatus.FAILURE;
         this.username = getUserName(context);
 
-        // attempts to get the duo code value that is sent back to the plugin URL after finishing with the prompt
+        // attempts to get the Duo code value that is sent back to the plugin URL after finishing with the prompt
         CredentialParam param = context.getCredential().getParam(CREDENTIAL_NAME_CODE);
 
         if ((param == null) || (param.getValue() == null) || (param.getValue().toString().length() == 0)) {
             LOGGER.log(Level.INFO, "Duo phase 1 starting");
-            // We didn't have a duo code, this is probably the first time through the plugin
 
-            // TODO health check and failmode considerations will go here later
-
-            status = ExecutionStatus.PAUSE;
-
-            // Generate state and store it in the OAM session
-            String duoState = duoClient.generateState();
-            PluginResponse duoStateSession = new PluginResponse(SESSION_STATE, duoState, PluginAttributeContextType.SESSION);
-            context.addResponse(duoStateSession);
-
-            // Generate the auth URL to send the user to
-            String authUrl;
-            try {
-                authUrl = duoClient.createAuthUrl(this.username, duoState);
-            } catch (Exception error) {
-                LOGGER.log(Level.SEVERE,
-                        "An exception occurred while "
-                                + sanitizeForLogging(this.username)
-                                + " attempted Duo two-factor authentication.",
-                        error);
-                this.updatePluginResponse(context);
-                return ExecutionStatus.FAILURE;
-            }
-            LOGGER.log(Level.INFO, "Generated auth url " + authUrl);
-
-            // Tell OAM to redirect the user
-            UserContextData codeResponseContext = new UserContextData(CREDENTIAL_NAME_CODE, CREDENTIAL_NAME_CODE, new CredentialMetaData((PluginConstants.PASSWORD)));
-            UserContextData stateResponseContext = new UserContextData(CREDENTIAL_NAME_STATE, CREDENTIAL_NAME_STATE, new CredentialMetaData((PluginConstants.PASSWORD)));
-            UserContextData urlContext = new UserContextData(authUrl, new CredentialMetaData("URL"));
-            UserActionContext actionContext = new UserActionContext();
-            actionContext.getContextData().add(codeResponseContext);
-            actionContext.getContextData().add(stateResponseContext);
-            actionContext.getContextData().add(urlContext);
-
-            userAction = UserActionMetaData.REDIRECT_GET;
-
-            LOGGER.log(Level.INFO, "Duo phase 1 complete, redirecting");
-            UserAction action = new UserAction(actionContext, userAction);
-            context.setAction(action);
-            this.updatePluginResponse(context);
-
+            // We didn't have a Duo code, this is probably the first time through the plugin
+            status = this.handlePhase1(context, this.duoClient);
         } else {
-            // We got a duo code, so we need to validate it
             LOGGER.log(Level.INFO, "Duo phase 2 starting");
 
-            // Get the expected parameters
-            // TODO handle missing params
-            CredentialParam codeParam = context.getCredential().getParam(CREDENTIAL_NAME_CODE);
-            String duoCode = codeParam.getValue().toString();
-            // TODO remove this log in real code
-            LOGGER.log(Level.INFO, "Got Duo code " + duoCode);
-            CredentialParam stateParam = context.getCredential().getParam(CREDENTIAL_NAME_STATE);
-            String duoState = stateParam.getValue().toString();
-
-            // Get the original state from the session
-            // TODO handle missing
-            String contextState = context.getResponse(PluginAttributeContextType.SESSION, "duoState").getValue().toString();
-
-            // TODO remove this log in real code
-            LOGGER.log(Level.INFO, "Comparing context state " + contextState + " to received state " + duoState);
-            if (!duoState.equals(contextState)) {
-                LOGGER.log(Level.SEVERE, "State validation was unsuccessful");
-                this.updatePluginResponse(context);
-                return ExecutionStatus.FAILURE;
-            }
-
-            // Exchange the code for the auth token from Duo
-            try {
-              Token duoToken = duoClient.exchangeAuthorizationCodeFor2FAResult(duoCode, this.username);
-              LOGGER.log(Level.INFO, "Got and validated Duo token successfully");
-              // TODO This will raise if the username doesn't match but is there anything we want to check?
-            } catch (Exception error) {
-                LOGGER.log(Level.SEVERE,
-                           "An exception occurred while "
-                           + sanitizeForLogging(this.username)
-                           + " attempted Duo two-factor authentication.",
-                           error);
-                this.updatePluginResponse(context);
-                return ExecutionStatus.FAILURE;
-            }
-
-            status = ExecutionStatus.SUCCESS;
-            this.updatePluginResponse(context);
+            // We got a Duo code, so we need to validate it
+            status = this.handlePhase2(context, this.duoClient, param);
         }
 
         return status;
+    }
 
+    /**
+     * Run the first phase of the Duo plugin logic:
+     * - Do a health check and invoke failmode if necessary
+     * - If Duo is healthy, issue the redirect
+     * 
+     * @param context The OAM authn context
+     * @param duoClient The Duo SDK client
+     * @return The plugin status after running phase 1
+     */
+    ExecutionStatus handlePhase1(final AuthenticationContext context, final Client duoClient) {
+        // TODO health check and failmode considerations will go here later
+
+        // Generate state and store it in the OAM session
+        String duoState = duoClient.generateState();
+        PluginResponse duoStateSession = new PluginResponse(SESSION_STATE, duoState, PluginAttributeContextType.SESSION);
+        context.addResponse(duoStateSession);
+
+        // Generate the auth URL to send the user to
+        String authUrl;
+        try {
+            authUrl = duoClient.createAuthUrl(this.username, duoState);
+        } catch (Exception error) {
+            LOGGER.log(Level.SEVERE,
+                    "An exception occurred while "
+                            + sanitizeForLogging(this.username)
+                            + " attempted Duo two-factor authentication.",
+                    error);
+            this.updatePluginResponse(context);
+            return ExecutionStatus.FAILURE;
+        }
+        LOGGER.log(Level.INFO, "Generated auth url " + authUrl);
+
+        // Tell OAM to redirect the user
+        UserContextData codeResponseContext = new UserContextData(CREDENTIAL_NAME_CODE, CREDENTIAL_NAME_CODE, new CredentialMetaData((PluginConstants.PASSWORD)));
+        UserContextData stateResponseContext = new UserContextData(CREDENTIAL_NAME_STATE, CREDENTIAL_NAME_STATE, new CredentialMetaData((PluginConstants.PASSWORD)));
+        UserContextData urlContext = new UserContextData(authUrl, new CredentialMetaData("URL"));
+        UserActionContext actionContext = new UserActionContext();
+        actionContext.getContextData().add(codeResponseContext);
+        actionContext.getContextData().add(stateResponseContext);
+        actionContext.getContextData().add(urlContext);
+
+        LOGGER.log(Level.INFO, "Duo phase 1 complete, redirecting");
+        UserActionMetaData userAction = UserActionMetaData.REDIRECT_GET;
+        UserAction action = new UserAction(actionContext, userAction);
+        context.setAction(action);
+        this.updatePluginResponse(context);
+
+        return ExecutionStatus.PAUSE;
+    }
+
+    /**
+     * Run the second phase of the Duo plugin
+     * - Exchange the access code for an Authn Token
+     * - Validate the Token
+     * 
+     * @param context The OAM authn context
+     * @param duoClient The Duo SDK Client
+     * @param codeParam The Duo access code
+     * @return The plugin status after running phase 2
+     */
+    ExecutionStatus handlePhase2(final AuthenticationContext context, final Client duoClient, CredentialParam codeParam) {
+
+        // Get the expected parameters
+        // TODO handle missing params
+        String duoCode = codeParam.getValue().toString();
+        // TODO remove this log in real code
+        LOGGER.log(Level.INFO, "Got Duo code " + duoCode);
+        CredentialParam stateParam = context.getCredential().getParam(CREDENTIAL_NAME_STATE);
+        String duoState = stateParam.getValue().toString();
+
+        // Get the original state from the session
+        // TODO handle missing
+        String contextState = context.getResponse(PluginAttributeContextType.SESSION, "duoState").getValue().toString();
+
+        // TODO remove this log in real code
+        LOGGER.log(Level.INFO, "Comparing context state " + contextState + " to received state " + duoState);
+        if (!duoState.equals(contextState)) {
+            LOGGER.log(Level.SEVERE, "State validation was unsuccessful");
+            this.updatePluginResponse(context);
+            return ExecutionStatus.FAILURE;
+        }
+
+        // Exchange the code for the auth token from Duo
+        try {
+          Token duoToken = duoClient.exchangeAuthorizationCodeFor2FAResult(duoCode, this.username);
+          LOGGER.log(Level.INFO, "Got and validated Duo token successfully");
+          // TODO This will raise if the username doesn't match but is there anything we want to check?
+        } catch (Exception error) {
+            LOGGER.log(Level.SEVERE,
+                       "An exception occurred while "
+                       + sanitizeForLogging(this.username)
+                       + " attempted Duo two-factor authentication.",
+                       error);
+            this.updatePluginResponse(context);
+            return ExecutionStatus.FAILURE;
+        }
+
+        this.updatePluginResponse(context);
+        
+        return ExecutionStatus.SUCCESS;
     }
 
     /**  TODO will need to do mostly the same thing, but for the health check
@@ -380,9 +404,8 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         } **/
     }
 
-    // TODO for later
     static String getUserAgent() {
-        String userAgent = "duo_oam/jar " + JAR_VERSION  + " (";
+        String userAgent = "duo_universal_oam/jar " + JAR_VERSION  + " (";
 
         userAgent = addKeyValueToUserAgent(userAgent, "java.version") + "; ";
         userAgent = addKeyValueToUserAgent(userAgent, "os.name") + "; ";
