@@ -1,13 +1,6 @@
 package com.duosecurity.plugin;
 
-import java.util.Map;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-
 import org.junit.Test;
-import java.lang.reflect.*;
-import org.junit.*;
 import static org.junit.Assert.*;
 
 public class DuoPluginLogSanitizationTest {
