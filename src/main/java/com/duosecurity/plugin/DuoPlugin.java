@@ -162,7 +162,13 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         return ExecutionStatus.PAUSE;
     }
 
-    void issueRedirect(AuthenticationContext context, String authUrl) {
+    /**
+     * Set up a redirect to the Duo authentication URL
+     *
+     * @param context the OAM context
+     * @param authUrl the URL to redirect the user to
+     */
+    private void issueRedirect(AuthenticationContext context, String authUrl) {
         UserContextData codeResponseContext = new UserContextData(CREDENTIAL_NAME_CODE, CREDENTIAL_NAME_CODE, new CredentialMetaData((PluginConstants.PASSWORD)));
         UserContextData stateResponseContext = new UserContextData(CREDENTIAL_NAME_STATE, CREDENTIAL_NAME_STATE, new CredentialMetaData((PluginConstants.PASSWORD)));
         UserContextData urlContext = new UserContextData(authUrl, new CredentialMetaData("URL"));
@@ -183,15 +189,14 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
      * 
      * @param context The OAM authn context
      * @param duoClient The Duo SDK Client
-     * @param codeParam The Duo access code
+     * @param codeParam The Duo access code, guaranteed not null or empty
      * @return The plugin status after running phase 2
      */
-    ExecutionStatus handlePhase2(final AuthenticationContext context, final Client duoClient, CredentialParam codeParam) {
+    ExecutionStatus handlePhase2(final AuthenticationContext context, final Client duoClient, CredentialParam codeParam) throws AuthenticationException{
 
         // Get the expected parameters
-        // TODO handle missing params
         String duoCode = codeParam.getValue().toString();
-        // TODO remove this log in real code or maybe only long partial
+        // TODO remove this log in real code or maybe only log partial
         LOGGER.log(Level.INFO, "Got Duo code " + duoCode);
 
         // Get the state sent by Duo
@@ -226,17 +231,36 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         return ExecutionStatus.SUCCESS;
     }
 
-    String getStateFromRequest(AuthenticationContext context) {
+    /**
+     * Pull the State parameter, which should have been returned by Duo, out of the request
+     *
+     * @param context the OAM context
+     * @return The value of the state parameter sent by Duo
+     * @throws AuthenticationException if the state parameter was missing
+     */
+    private String getStateFromRequest(AuthenticationContext context) throws AuthenticationException {
         CredentialParam stateParam = context.getCredential().getParam(CREDENTIAL_NAME_STATE);
-        String duoState = stateParam.getValue().toString();
-        // TODO handle missing or null at each step
-        return duoState;
+        if (stateParam == null || stateParam.getValue() == null) {
+            LOGGER.log(Level.SEVERE, "State parameter was not returned from Duo");
+            throw new AuthenticationException("Duo State parameter missing");
+        }
+        return stateParam.getValue().toString();
     }
 
-    String getStateFromSession(AuthenticationContext context) {
-        String contextState = context.getResponse(PluginAttributeContextType.SESSION, SESSION_STATE).getValue().toString();
-        // TODO handle missing or null at each step
-        return contextState;
+    /**
+     * Pull the State parameter out of the session, where it should have been stored
+     *
+     * @param context the OAM context
+     * @return The value of the state parameter stored in the session
+     * @throws AuthenticationException if the state parameter was missing
+     */
+    private String getStateFromSession(AuthenticationContext context) throws AuthenticationException {
+        PluginResponse sessionState = context.getResponse(PluginAttributeContextType.SESSION, SESSION_STATE);
+        if (sessionState == null || sessionState.getValue() == null) {
+            LOGGER.log(Level.SEVERE, "State parameter was not available from the session");
+            throw new AuthenticationException("Session State parameter missing");
+        }
+        return sessionState.getValue().toString();
     }
 
     /**  TODO will need to do mostly the same thing, but for the health check
@@ -433,7 +457,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
     }
 
     private static String addKeyValueToUserAgent(String userAgent, String key) {
-        return userAgent += (key + "=" + System.getProperty(key));
+        return userAgent + (key + "=" + System.getProperty(key));
     }
 
     static String sanitizeForLogging(String stringToSanitize) {
