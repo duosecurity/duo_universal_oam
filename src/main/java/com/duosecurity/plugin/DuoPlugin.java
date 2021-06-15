@@ -77,6 +77,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
             // this.failmode = config.getParameter(FAILMODE).toString().toLowerCase();
             // String configuredStore = (String) config.getParameter(STORE_PARAM);
             // if (configuredStore != null && !configuredStore.equals("")) {
+            //     LOGGER.log(Level.CONFIG, "Using custom User Store " + configuredStore);
             //     this.userStore = configuredStore;
             // }
             // TODO any validation on redirect URL?
@@ -92,7 +93,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         }
 
         // TODO logging at CONFIG level
-        // LOGGER.log(Level.INFO, "Fail mode is set to: " + sanitizeForLogging(this.failmode));
+        // LOGGER.log(Level.CONFIG, "Fail mode is set to: " + sanitizeForLogging(this.failmode));
 
         return ExecutionStatus.SUCCESS;
     }
@@ -152,7 +153,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
             this.updatePluginResponse(context);
             return ExecutionStatus.FAILURE;
         }
-        LOGGER.log(Level.INFO, "Generated auth url " + authUrl);
+        LOGGER.log(Level.FINE, "Generated auth url " + authUrl);
 
         // Tell OAM to redirect the user
         this.issueRedirect(context, authUrl);
@@ -196,8 +197,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
 
         // Get the expected parameters
         String duoCode = codeParam.getValue().toString();
-        // TODO remove this log in real code or maybe only log partial
-        LOGGER.log(Level.INFO, "Got Duo code " + duoCode);
+        LOGGER.log(Level.FINE, "Got Duo code " + duoCode.substring(0, 4));
 
         // Get the state sent by Duo
         String duoState = this.getStateFromRequest(context);
@@ -214,7 +214,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         // Exchange the code for the auth token from Duo
         try {
           Token duoToken = duoClient.exchangeAuthorizationCodeFor2FAResult(duoCode, this.username);
-          LOGGER.log(Level.INFO, "Got and validated Duo token successfully");
+          LOGGER.log(Level.FINE, "Got and validated Duo token successfully");
           // TODO This will raise if the username doesn't match but is there anything we want to check?
         } catch (Exception error) {
             LOGGER.log(Level.SEVERE,
