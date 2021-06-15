@@ -67,7 +67,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
 
         super.initialize(config);
 
-        LOGGER.log(Level.INFO, this.getClass().getName() + " initializing Duo Plugin");
+        LOGGER.log(Level.INFO, this.getClass().getName() + " initializing Duo Plugin " + JAR_VERSION);
         try {
             this.ikey = (String) config.getParameter(IKEY_PARAM);
             this.skey = (String) config.getParameter(SKEY_PARAM);
@@ -83,10 +83,9 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
                 LOGGER.log(Level.CONFIG, "Using default User Store");
             }
             // TODO any validation on redirect URL?
-            this.duoClient = new Client(this.ikey, this.skey, this.host, this.redirectUrl);
 
-            // TODO user agent string
-            // this.duoClient.appendUserAgentInfo("TODO");
+            this.duoClient = new Client(this.ikey, this.skey, this.host, this.redirectUrl);
+            this.duoClient.appendUserAgentInfo(getUserAgent());
         } catch (Exception error) {
             LOGGER.log(Level.SEVERE,
                        "Error initializing Duo plugin",
