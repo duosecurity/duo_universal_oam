@@ -39,12 +39,12 @@
         <globalUIOverride>true</globalUIOverride>
         <value></value>
     </AttributeValuePair> -->
-    <!-- <AttributeValuePair>
+    <AttributeValuePair>
         <Attribute type="string" length="150">User Store</Attribute>
         <mandatory>false</mandatory>
         <instanceOverride>false</instanceOverride>
         <globalUIOverride>true</globalUIOverride>
         <value></value>
-    </AttributeValuePair> -->
+    </AttributeValuePair>
   </configuration>
 </Plugin>

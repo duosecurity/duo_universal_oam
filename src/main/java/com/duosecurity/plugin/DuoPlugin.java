@@ -37,7 +37,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
     private static final String SKEY_PARAM = "skey";
     private static final String HOST_PARAM = "host";
     private static final String REDIRECT_PARAM = "Redirect URL";
-    // private static final String STORE_PARAM = "User Store";
+    private static final String STORE_PARAM = "User Store";
     // private static final String FAILMODE = "Fail mode";
     private static final String SESSION_STATE = "duoState";
     private static final String CREDENTIAL_NAME_CODE = "duo_code";
@@ -57,7 +57,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
     String host = null;
     String redirectUrl = null;
     // String failmode = null;
-    // String userStore = null;
+    String userStore = null;
 
     private Client duoClient;
     String username = null;
@@ -73,13 +73,15 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
             this.skey = (String) config.getParameter(SKEY_PARAM);
             this.host = (String) config.getParameter(HOST_PARAM);
             this.redirectUrl = (String) config.getParameter(REDIRECT_PARAM);
-            // TODO re-enable failmode and user store options
+            // TODO re-enable failmode
             // this.failmode = config.getParameter(FAILMODE).toString().toLowerCase();
-            // String configuredStore = (String) config.getParameter(STORE_PARAM);
-            // if (configuredStore != null && !configuredStore.equals("")) {
-            //     LOGGER.log(Level.CONFIG, "Using custom User Store " + configuredStore);
-            //     this.userStore = configuredStore;
-            // }
+            String configuredStore = (String) config.getParameter(STORE_PARAM);
+            if (configuredStore != null && !configuredStore.equals("")) {
+                LOGGER.log(Level.CONFIG, "Using custom User Store " + configuredStore);
+                this.userStore = configuredStore;
+            } else {
+                LOGGER.log(Level.CONFIG, "Using default User Store");
+            }
             // TODO any validation on redirect URL?
             this.duoClient = new Client(this.ikey, this.skey, this.host, this.redirectUrl);
 
@@ -433,14 +435,11 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
     }
 
     private UserIdentityProvider getUserIdentityProvider() throws IdentityProviderException {
-
-        return UserIdentityProviderFactory.getProvider();
-        /**
         if (this.userStore == null) {
             return UserIdentityProviderFactory.getProvider();
         } else {
             return UserIdentityProviderFactory.getProvider(this.userStore);
-        } **/
+        }
     }
 
     static String getUserAgent() {
