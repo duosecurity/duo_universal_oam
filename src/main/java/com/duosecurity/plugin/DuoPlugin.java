@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.security.auth.Subject;
 
+import com.duosecurity.exception.DuoException;
 import oracle.security.am.plugin.ExecutionStatus;
 import oracle.security.am.plugin.MonitoringData;
 import oracle.security.am.plugin.PluginAttributeContextType;
@@ -217,7 +218,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
           Token duoToken = duoClient.exchangeAuthorizationCodeFor2FAResult(duoCode, this.username);
           LOGGER.log(Level.FINE, "Got and validated Duo token successfully");
           // TODO This will raise if the username doesn't match but is there anything we want to check?
-        } catch (Exception error) {
+        } catch (DuoException error) {
             LOGGER.log(Level.SEVERE,
                        "An exception occurred while "
                        + sanitizeForLogging(this.username)
