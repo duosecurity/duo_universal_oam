@@ -1,14 +1,16 @@
 package com.duosecurity.plugin;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Map;
 
-import org.junit.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DuoPluginConfigTest {
     DuoPlugin duoPlugin;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         duoPlugin = new DuoPlugin();
         duoPlugin.username = "tester";
@@ -58,13 +60,13 @@ public class DuoPluginConfigTest {
     public void testGetDescription() {
         String ret_description = duoPlugin.getDescription();
         String description = "Duo Security's Plugin to allow users to 2FA with Duo";
-        assertTrue(ret_description.equals(description));
+        assertEquals(description, ret_description);
     }
 
     @Test
     public void testGetMonitoringData() {
         Map data = duoPlugin.getMonitoringData();
-        assertTrue(data == null);
+        assertNull(data);
     }
 
     @Test
@@ -76,7 +78,7 @@ public class DuoPluginConfigTest {
     @Test
     public void testGetPluginName() {
         String data = duoPlugin.getPluginName();
-        assertTrue(data.equals("DuoPlugin"));
+        assertEquals(data, "DuoPlugin");
     }
 
     @Test

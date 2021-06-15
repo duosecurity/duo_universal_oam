@@ -30,7 +30,7 @@ import oracle.security.am.engines.common.identity.provider.UserIdentityProviderF
 import com.duosecurity.Client;
 import com.duosecurity.model.Token;
 
-public final class DuoPlugin extends AbstractAuthenticationPlugIn {
+public class DuoPlugin extends AbstractAuthenticationPlugIn {
 
     private static final String JAR_VERSION = "0.1.0";
     private static final String IKEY_PARAM = "ikey";
@@ -59,7 +59,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
     // String failmode = null;
     String userStore = null;
 
-    private Client duoClient;
+    Client duoClient;
     String username = null;
 
     @Override
@@ -239,7 +239,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
      * @return The value of the state parameter sent by Duo
      * @throws AuthenticationException if the state parameter was missing
      */
-    private String getStateFromRequest(AuthenticationContext context) throws AuthenticationException {
+    String getStateFromRequest(AuthenticationContext context) throws AuthenticationException {
         CredentialParam stateParam = context.getCredential().getParam(CREDENTIAL_NAME_STATE);
         if (stateParam == null || stateParam.getValue() == null) {
             LOGGER.log(Level.SEVERE, "State parameter was not returned from Duo");
@@ -255,7 +255,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
      * @return The value of the state parameter stored in the session
      * @throws AuthenticationException if the state parameter was missing
      */
-    private String getStateFromSession(AuthenticationContext context) throws AuthenticationException {
+    String getStateFromSession(AuthenticationContext context) throws AuthenticationException {
         PluginResponse sessionState = context.getResponse(PluginAttributeContextType.SESSION, SESSION_STATE);
         if (sessionState == null || sessionState.getValue() == null) {
             LOGGER.log(Level.SEVERE, "State parameter was not available from the session");
@@ -358,7 +358,7 @@ public final class DuoPlugin extends AbstractAuthenticationPlugIn {
         return 0;
     }
 
-    private void updatePluginResponse(final AuthenticationContext context) {
+    void updatePluginResponse(final AuthenticationContext context) {
         // TODO figure out what in here is unnecessary
         String retAttrs[] = (String[]) null;
 
