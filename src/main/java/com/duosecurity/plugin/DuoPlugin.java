@@ -139,14 +139,13 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
 
         // Generate state and store it in the OAM session
         String duoState = duoClient.generateState();
-        PluginResponse duoStateSession = new PluginResponse(SESSION_STATE, duoState, PluginAttributeContextType.SESSION);
-        context.addResponse(duoStateSession);
+        this.storeStateInSession(context, duoState);
 
         // Generate the auth URL to send the user to
         String authUrl;
         try {
             authUrl = duoClient.createAuthUrl(this.username, duoState);
-        } catch (Exception error) {
+        } catch (DuoException error) {
             LOGGER.log(Level.SEVERE,
                     "An exception occurred while "
                             + sanitizeForLogging(this.username)
@@ -165,13 +164,18 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
         return ExecutionStatus.PAUSE;
     }
 
+    void storeStateInSession(AuthenticationContext context, String duoState) {
+        PluginResponse duoStateSession = new PluginResponse(SESSION_STATE, duoState, PluginAttributeContextType.SESSION);
+        context.addResponse(duoStateSession);
+    }
+
     /**
      * Set up a redirect to the Duo authentication URL
      *
      * @param context the OAM context
      * @param authUrl the URL to redirect the user to
      */
-    private void issueRedirect(AuthenticationContext context, String authUrl) {
+    void issueRedirect(AuthenticationContext context, String authUrl) {
         UserContextData codeResponseContext = new UserContextData(CREDENTIAL_NAME_CODE, CREDENTIAL_NAME_CODE, new CredentialMetaData((PluginConstants.PASSWORD)));
         UserContextData stateResponseContext = new UserContextData(CREDENTIAL_NAME_STATE, CREDENTIAL_NAME_STATE, new CredentialMetaData((PluginConstants.PASSWORD)));
         UserContextData urlContext = new UserContextData(authUrl, new CredentialMetaData("URL"));
