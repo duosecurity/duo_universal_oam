@@ -73,10 +73,10 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
             this.failmode = this.determineFailmode(config.getParameter(FAILMODE));
             String configuredStore = (String) config.getParameter(STORE_PARAM);
             if (configuredStore != null && !configuredStore.equals("")) {
-                LOGGER.log(Level.CONFIG, "Using custom User Store " + configuredStore);
+                LOGGER.log(Level.CONFIG, "Duo Plugin is using custom User Store " + configuredStore);
                 this.userStore = configuredStore;
             } else {
-                LOGGER.log(Level.CONFIG, "Using default User Store");
+                LOGGER.log(Level.CONFIG, "Duo Plugin is using default User Store");
             }
             // TODO any validation on redirect URL?
 
@@ -89,7 +89,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
             throw new IllegalArgumentException("Could not initialize Duo Plugin with provided parameters");
         }
 
-        LOGGER.log(Level.CONFIG, "Fail mode is set to fail " + (this.failmode == Failmode.CLOSED ? "closed" : "open"));
+        LOGGER.log(Level.CONFIG, "Duo Plugin fail mode is set to fail " + (this.failmode == Failmode.CLOSED ? "closed" : "open"));
 
         return ExecutionStatus.SUCCESS;
     }
@@ -97,12 +97,12 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
     static Failmode determineFailmode(Object configParam) {
         // Determine failmode from the provided config value.  Default to CLOSED unless we can for sure determine OPEN
         if (configParam == null) {
-            LOGGER.log(Level.CONFIG, "Failmode parameter was unexpectedly missing");
+            LOGGER.log(Level.CONFIG, "Duo Plugin Failmode parameter was unexpectedly missing");
             return Failmode.CLOSED;
         }
 
         if (!(configParam instanceof String)) {
-            LOGGER.log(Level.CONFIG, "Failmode parameter was unexpectedly not a string");
+            LOGGER.log(Level.CONFIG, "Duo Plugin Failmode parameter was unexpectedly not a string");
             return Failmode.CLOSED;
         }
 
@@ -149,7 +149,21 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
      * @return The plugin status after running phase 1
      */
     ExecutionStatus handlePhase1(final AuthenticationContext context, final Client duoClient) {
-        // TODO health check and failmode considerations will go here later
+        // Determine if we should proceed based on Duo health and failmode
+        FailmodeResult failmodeResult = this.performHealthCheckAndFailmode(duoClient,this.failmode);
+        if (failmodeResult == FailmodeResult.BLOCK) {
+            LOGGER.log(Level.WARNING, "Duo Plugin failing closed and blocking user " + sanitizeForLogging(this.username));
+            this.updatePluginResponse(context);
+
+            return ExecutionStatus.FAILURE;
+        } else if (failmodeResult == FailmodeResult.ALLOW) {
+            LOGGER.log(Level.FINE, "Duo Plugin failing open and bypassing 2FA for user " + sanitizeForLogging(this.username));
+            this.updatePluginResponse(context);
+
+            return ExecutionStatus.SUCCESS;
+        } else {
+            LOGGER.log(Level.FINE, "Duo Plugin performing 2FA for user " + sanitizeForLogging(this.username));
+        }
 
         // Generate state and store it in the OAM session
         String duoState = duoClient.generateState();
@@ -168,7 +182,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
             this.updatePluginResponse(context);
             return ExecutionStatus.FAILURE;
         }
-        LOGGER.log(Level.FINE, "Generated auth url " + authUrl);
+        LOGGER.log(Level.FINE, "Duo Plugin generated auth url " + authUrl);
 
         // Tell OAM to redirect the user
         this.issueRedirect(context, authUrl);
@@ -253,7 +267,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
         String contextState = this.getStateFromSession(context);
 
         if (!duoState.equals(contextState)) {
-            LOGGER.log(Level.SEVERE, "State validation was unsuccessful");
+            LOGGER.log(Level.SEVERE, "Duo Plugin state validation was unsuccessful");
             this.updatePluginResponse(context);
             return ExecutionStatus.FAILURE;
         }
@@ -304,7 +318,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
     String getStateFromSession(AuthenticationContext context) throws AuthenticationException {
         PluginResponse sessionState = context.getResponse(PluginAttributeContextType.SESSION, SESSION_STATE);
         if (sessionState == null || sessionState.getValue() == null) {
-            LOGGER.log(Level.SEVERE, "State parameter was not available from the session");
+            LOGGER.log(Level.SEVERE, "Duo Plugin State parameter was not available from the session");
             throw new AuthenticationException("Session State parameter missing");
         }
         return sessionState.getValue().toString();

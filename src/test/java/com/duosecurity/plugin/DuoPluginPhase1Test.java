@@ -22,6 +22,7 @@ public class DuoPluginPhase1Test {
     @BeforeEach
     public void setUp() {
         duoPlugin = Mockito.mock(DuoPlugin.class);
+        duoPlugin.failmode = DuoPlugin.Failmode.OPEN;
         duoPlugin.username = "username";
         duoPlugin.duoClient = Mockito.mock(Client.class);
 
@@ -38,6 +39,7 @@ public class DuoPluginPhase1Test {
 
     @Test
     public void testSuccess() throws DuoException {
+        Mockito.when(duoPlugin.performHealthCheckAndFailmode(isA(Client.class), isA(DuoPlugin.Failmode.class))).thenReturn(DuoPlugin.FailmodeResult.AUTH);
         Mockito.when(duoPlugin.duoClient.createAuthUrl(anyString(), anyString())).thenReturn("url");
 
         ExecutionStatus result = duoPlugin.handlePhase1(context, duoPlugin.duoClient);
@@ -45,7 +47,24 @@ public class DuoPluginPhase1Test {
     }
 
     @Test
+    public void testFailOpen() {
+        Mockito.when(duoPlugin.performHealthCheckAndFailmode(isA(Client.class), isA(DuoPlugin.Failmode.class))).thenReturn(DuoPlugin.FailmodeResult.ALLOW);
+
+        ExecutionStatus result = duoPlugin.handlePhase1(context, duoPlugin.duoClient);
+        assertEquals(ExecutionStatus.SUCCESS, result);
+    }
+
+    @Test
+    public void testFailClosed() {
+        Mockito.when(duoPlugin.performHealthCheckAndFailmode(isA(Client.class), isA(DuoPlugin.Failmode.class))).thenReturn(DuoPlugin.FailmodeResult.BLOCK);
+
+        ExecutionStatus result = duoPlugin.handlePhase1(context, duoPlugin.duoClient);
+        assertEquals(ExecutionStatus.FAILURE, result);
+    }
+
+    @Test
     public void testAuthUrlExceptionFailure() throws DuoException {
+        Mockito.when(duoPlugin.performHealthCheckAndFailmode(isA(Client.class), isA(DuoPlugin.Failmode.class))).thenReturn(DuoPlugin.FailmodeResult.AUTH);
         Mockito.when(duoPlugin.duoClient.createAuthUrl(anyString(), anyString())).thenThrow(new DuoException("woops"));
 
         ExecutionStatus result = duoPlugin.handlePhase1(context, duoPlugin.duoClient);
