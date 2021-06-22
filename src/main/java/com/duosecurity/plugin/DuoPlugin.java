@@ -5,6 +5,7 @@ import java.util.logging.Level;
 import javax.security.auth.Subject;
 
 import com.duosecurity.exception.DuoException;
+import com.duosecurity.model.HealthCheckResponse;
 import oracle.security.am.plugin.ExecutionStatus;
 import oracle.security.am.plugin.MonitoringData;
 import oracle.security.am.plugin.PluginAttributeContextType;
@@ -43,11 +44,6 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
     private static final String SESSION_STATE = "duoState";
     private static final String CREDENTIAL_NAME_CODE = "duo_code";
     private static final String CREDENTIAL_NAME_STATE = "state";
-
-    // number of tries to contact Duo
-    private static final int MAX_TRIES = 3;
-    // duration of time in seconds until a retry is requested to Duo
-    private static final int MAX_TIMEOUT = 10;
 
     // Regex-syntax string, indicating the things to remove during sanitization of a string
     private static final String SANITIZING_PATTERN = "[^A-Za-z0-9_@.]";
@@ -164,6 +160,33 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
         return ExecutionStatus.PAUSE;
     }
 
+    FailmodeResult performHealthCheckAndFailmode(final Client duoClient, String failmode) {
+        boolean isDuoHealthy = this.isDuoHealthy(duoClient);
+        if (isDuoHealthy) {
+            return FailmodeResult.AUTH;
+        }
+
+        if ("open".equalsIgnoreCase(failmode)) {
+            return FailmodeResult.ALLOW;
+        } else {
+            return FailmodeResult.BLOCK;
+        }
+    }
+
+    boolean isDuoHealthy(final Client duoClient) {
+        try {
+            HealthCheckResponse checkResponse = duoClient.healthCheck();
+            if (checkResponse == null || !checkResponse.wasSuccess()) {
+                LOGGER.log(Level.FINE, "Duo health check reports Duo is unavailable");
+                return false;
+            }
+        } catch (DuoException de) {
+            LOGGER.log(Level.WARNING, "Duo health check failed with error", de);
+            return false;
+        }
+        return true;
+    }
+
     void storeStateInSession(AuthenticationContext context, String duoState) {
         PluginResponse duoStateSession = new PluginResponse(SESSION_STATE, duoState, PluginAttributeContextType.SESSION);
         context.addResponse(duoStateSession);
@@ -269,65 +292,6 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
         return sessionState.getValue().toString();
     }
 
-    /**  TODO will need to do mostly the same thing, but for the health check
-    private Response sendPreAuthRequest() throws Exception {
-        Http request = new Http("POST", this.host, "/auth/v2/preauth",
-                MAX_TIMEOUT);
-        request.addParam("username", this.username);
-        String userAgent = getUserAgent();
-        request.addHeader("User-Agent", userAgent);
-        request.signRequest(this.ikey, this.skey);
-        return request.executeHttpRequest();
-    }
-
-    String performPreAuth() throws Exception {
-
-        if (this.failmode.equals("secure")) {
-            return "auth";
-        } else if (!this.failmode.equals("safe")) {
-            throw new IllegalArgumentException("Fail mode must be either "
-                                               + "safe or secure");
-        }
-
-        // check if Duo authentication is even necessary by calling preauth
-        for (int i = 0; ; ++i) {
-            try {
-                Response preAuthResponse = sendPreAuthRequest();
-                int statusCode = preAuthResponse.code();
-                if (statusCode / 100 == 5) {
-                    LOGGER.log(Level.WARNING,
-                               "Duo 500 error. Fail open for user: "
-                               + sanitizeForLogging(this.username));
-                    return "allow";
-                }
-
-                // parse response
-                JSONObject json = new JSONObject(preAuthResponse.body().string());
-                if (!json.getString("stat").equals("OK")) {
-                    throw new Exception(
-                            "Duo error code (" + json.getInt("code") + "): "
-                            + json.getString("message"));
-                }
-
-                String result = json.getJSONObject("response").getString("result");
-                if (result.equals("allow")) {
-                    LOGGER.log(Level.INFO, "Duo 2FA bypass for user: "
-                               + sanitizeForLogging(this.username));
-                    return "allow";
-                }
-                break;
-
-            } catch (java.io.IOException error) {
-                if (i >= this.MAX_TRIES - 1) {
-                    LOGGER.log(Level.WARNING,
-                               "Duo server unreachable. Fail open for user: "
-                               + sanitizeForLogging(this.username), error);
-                    return "allow";
-                }
-            }
-        }
-        return "auth";
-    } **/
 
     @Override
     public String getDescription() {
@@ -469,5 +433,11 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
       }
 
       return stringToSanitize.replaceAll(SANITIZING_PATTERN, "");        
+    }
+
+    public enum FailmodeResult {
+        ALLOW,
+        AUTH,
+        BLOCK,
     }
 }
