@@ -56,7 +56,7 @@ public class DuoPluginFailmodeTest {
         Mockito.when(hcResponse.wasSuccess()).thenReturn(Boolean.TRUE);
         Mockito.when(duoClient.healthCheck()).thenReturn(hcResponse);
 
-        DuoPlugin.FailmodeResult result = duoPlugin.performHealthCheckAndFailmode(duoClient, "open");
+        DuoPlugin.FailmodeResult result = duoPlugin.performHealthCheckAndFailmode(duoClient, DuoPlugin.Failmode.OPEN);
 
         assertEquals(DuoPlugin.FailmodeResult.AUTH, result);
     }
@@ -66,7 +66,7 @@ public class DuoPluginFailmodeTest {
         Mockito.when(hcResponse.wasSuccess()).thenReturn(Boolean.FALSE);
         Mockito.when(duoClient.healthCheck()).thenReturn(hcResponse);
 
-        DuoPlugin.FailmodeResult result = duoPlugin.performHealthCheckAndFailmode(duoClient, "open");
+        DuoPlugin.FailmodeResult result = duoPlugin.performHealthCheckAndFailmode(duoClient, DuoPlugin.Failmode.OPEN);
 
         assertEquals(DuoPlugin.FailmodeResult.ALLOW, result);
     }
@@ -76,8 +76,62 @@ public class DuoPluginFailmodeTest {
         Mockito.when(hcResponse.wasSuccess()).thenReturn(Boolean.FALSE);
         Mockito.when(duoClient.healthCheck()).thenReturn(hcResponse);
 
-        DuoPlugin.FailmodeResult result = duoPlugin.performHealthCheckAndFailmode(duoClient, "closed");
+        DuoPlugin.FailmodeResult result = duoPlugin.performHealthCheckAndFailmode(duoClient, DuoPlugin.Failmode.CLOSED);
 
         assertEquals(DuoPlugin.FailmodeResult.BLOCK, result);
+    }
+
+    @Test
+    public void testNullFailmodeConfig() {
+        Object configParam = null;
+
+        DuoPlugin.Failmode result = DuoPlugin.determineFailmode(configParam);
+
+        assertEquals(DuoPlugin.Failmode.CLOSED, result);
+    }
+
+    @Test
+    public void testNonStringFailmodeConfig() {
+        Integer configParam = 7;
+
+        DuoPlugin.Failmode result = DuoPlugin.determineFailmode(configParam);
+
+        assertEquals(DuoPlugin.Failmode.CLOSED, result);
+    }
+
+    @Test
+    public void testNonsenseFailmodeConfig() {
+        String configParam = "not a failmode";
+
+        DuoPlugin.Failmode result = DuoPlugin.determineFailmode(configParam);
+
+        assertEquals(DuoPlugin.Failmode.CLOSED, result);
+    }
+
+    @Test
+    public void testClosedFailmodeConfig() {
+        String configParam = "closed";
+
+        DuoPlugin.Failmode result = DuoPlugin.determineFailmode(configParam);
+
+        assertEquals(DuoPlugin.Failmode.CLOSED, result);
+    }
+
+    @Test
+    public void testOpenFailmodeConfig() {
+        String configParam = "open";
+
+        DuoPlugin.Failmode result = DuoPlugin.determineFailmode(configParam);
+
+        assertEquals(DuoPlugin.Failmode.OPEN, result);
+    }
+
+    @Test
+    public void testOpenMixedCaseFailmodeConfig() {
+        String configParam = "oPen";
+
+        DuoPlugin.Failmode result = DuoPlugin.determineFailmode(configParam);
+
+        assertEquals(DuoPlugin.Failmode.OPEN, result);
     }
 }

@@ -40,7 +40,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
     private static final String HOST_PARAM = "host";
     private static final String REDIRECT_PARAM = "Redirect URL";
     private static final String STORE_PARAM = "User Store";
-    // private static final String FAILMODE = "Fail mode";
+    private static final String FAILMODE = "Fail mode";
     private static final String SESSION_STATE = "duoState";
     private static final String CREDENTIAL_NAME_CODE = "duo_code";
     private static final String CREDENTIAL_NAME_STATE = "state";
@@ -53,7 +53,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
     String skey = null;
     String host = null;
     String redirectUrl = null;
-    // String failmode = null;
+    Failmode failmode = Failmode.CLOSED;
     String userStore = null;
 
     Client duoClient;
@@ -70,8 +70,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
             this.skey = (String) config.getParameter(SKEY_PARAM);
             this.host = (String) config.getParameter(HOST_PARAM);
             this.redirectUrl = (String) config.getParameter(REDIRECT_PARAM);
-            // TODO re-enable failmode
-            // this.failmode = config.getParameter(FAILMODE).toString().toLowerCase();
+            this.failmode = this.determineFailmode(config.getParameter(FAILMODE));
             String configuredStore = (String) config.getParameter(STORE_PARAM);
             if (configuredStore != null && !configuredStore.equals("")) {
                 LOGGER.log(Level.CONFIG, "Using custom User Store " + configuredStore);
@@ -90,10 +89,29 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
             throw new IllegalArgumentException("Could not initialize Duo Plugin with provided parameters");
         }
 
-        // TODO logging at CONFIG level
-        // LOGGER.log(Level.CONFIG, "Fail mode is set to: " + sanitizeForLogging(this.failmode));
+        LOGGER.log(Level.CONFIG, "Fail mode is set to fail " + (this.failmode == Failmode.CLOSED ? "closed" : "open"));
 
         return ExecutionStatus.SUCCESS;
+    }
+
+    static Failmode determineFailmode(Object configParam) {
+        // Determine failmode from the provided config value.  Default to CLOSED unless we can for sure determine OPEN
+        if (configParam == null) {
+            LOGGER.log(Level.CONFIG, "Failmode parameter was unexpectedly missing");
+            return Failmode.CLOSED;
+        }
+
+        if (!(configParam instanceof String)) {
+            LOGGER.log(Level.CONFIG, "Failmode parameter was unexpectedly not a string");
+            return Failmode.CLOSED;
+        }
+
+        String configString = (String)configParam;
+        if ("open".equalsIgnoreCase(configString)) {
+            return Failmode.OPEN;
+        } else {
+            return Failmode.CLOSED;
+        }
     }
 
     @Override
@@ -160,13 +178,13 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
         return ExecutionStatus.PAUSE;
     }
 
-    FailmodeResult performHealthCheckAndFailmode(final Client duoClient, String failmode) {
+    FailmodeResult performHealthCheckAndFailmode(final Client duoClient, Failmode failmode) {
         boolean isDuoHealthy = this.isDuoHealthy(duoClient);
         if (isDuoHealthy) {
             return FailmodeResult.AUTH;
         }
 
-        if ("open".equalsIgnoreCase(failmode)) {
+        if (Failmode.OPEN == failmode) {
             return FailmodeResult.ALLOW;
         } else {
             return FailmodeResult.BLOCK;
@@ -433,6 +451,11 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
       }
 
       return stringToSanitize.replaceAll(SANITIZING_PATTERN, "");        
+    }
+
+    public enum Failmode {
+        OPEN,
+        CLOSED,
     }
 
     public enum FailmodeResult {
