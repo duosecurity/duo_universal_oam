@@ -34,7 +34,7 @@ import com.duosecurity.model.Token;
 
 public class DuoPlugin extends AbstractAuthenticationPlugIn {
 
-    private static final String JAR_VERSION = "0.1.0";
+    private static final String JAR_VERSION = "0.6.0";
     private static final String IKEY_PARAM = "Client ID";
     private static final String SKEY_PARAM = "Client Secret";
     private static final String HOST_PARAM = "API hostname";
@@ -78,7 +78,6 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
             } else {
                 LOGGER.log(Level.CONFIG, "Duo Plugin is using default User Store");
             }
-            // TODO any validation on redirect URL?
 
             this.duoClient = new Client(this.ikey, this.skey, this.host, this.redirectUrl);
             this.duoClient.appendUserAgentInfo(getUserAgent());
@@ -276,7 +275,6 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
         try {
           Token duoToken = duoClient.exchangeAuthorizationCodeFor2FAResult(duoCode, this.username);
           LOGGER.log(Level.FINE, "Got and validated Duo token successfully");
-          // TODO This will raise if the username doesn't match but is there anything we want to check?
         } catch (DuoException error) {
             LOGGER.log(Level.SEVERE,
                        "An exception occurred while "
