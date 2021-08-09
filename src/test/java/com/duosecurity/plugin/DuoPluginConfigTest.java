@@ -20,42 +20,6 @@ public class DuoPluginConfigTest {
         // duoPlugin.failmode = "secure";
     }
 
-    /**
-    @Test
-    public void testPerformPreauth_whenFailmodeSecure() {
-        duoPlugin.failmode = "secure";
-        try {
-            assertEquals("auth", duoPlugin.performPreAuth());
-        } catch (Exception e) {
-            fail("Unexpected exception thrown.");
-        }
-    } **/
-
-    /**
-    @Test
-    public void testPerformPreauth_whenFailmodeSafeAndDuoUnreachable() {
-        duoPlugin.failmode = "safe";
-        try {
-            assertEquals("allow", duoPlugin.performPreAuth());
-        } catch (Exception e) {
-            fail("Unexpected exception thrown.");
-        }
-    } **/
-
-    /**
-    @Test
-    public void testPerformPreauth_whenFailmodeInvalid() {
-        duoPlugin.failmode = "invalidfailmode";
-        try {
-            duoPlugin.performPreAuth();
-            fail("Expected IllegalArgumentException thrown.");
-        } catch (IllegalArgumentException e) {
-
-        } catch (Exception e) {
-            fail("Expected IllegalArgumentException thrown.");
-        }
-    } **/
-
     @Test
     public void testGetDescription() {
         String ret_description = duoPlugin.getDescription();
