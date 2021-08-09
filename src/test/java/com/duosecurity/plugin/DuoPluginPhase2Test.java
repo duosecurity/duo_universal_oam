@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Duo Security support@duosecurity.com
+//
+// SPDX-License-Identifier: BSD-3-Clause
+
 package com.duosecurity.plugin;
 
 import com.duosecurity.Client;
