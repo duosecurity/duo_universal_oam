@@ -1,14 +1,21 @@
 # Overview
 
-**duo_universal_oam** - Duo two-factor authentication plugin for Oracle Access Manager.
+Duo two-factor authentication plugin for Oracle Access Manager with the Duo Universal Prompt.
 
 # Usage
 
-TODO
+Installation documentation can be found at <https://duo.com/docs/oam>.
 
 # Development
+## Prerequisites
+ - Java JDK 8
+ - Maven
 
-TODO
+## Installation
+From the repository root directory run `mvn install`
+
+## Testing
+From the repository root directory run `mvn test`
 
 # Support
 
