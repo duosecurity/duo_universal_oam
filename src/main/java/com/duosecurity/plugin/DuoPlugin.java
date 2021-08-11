@@ -39,8 +39,8 @@ import com.duosecurity.model.Token;
 public class DuoPlugin extends AbstractAuthenticationPlugIn {
 
     private static final String JAR_VERSION = "0.6.0";
-    private static final String IKEY_PARAM = "Client ID";
-    private static final String SKEY_PARAM = "Client Secret";
+    private static final String CLIENT_ID_PARAM = "Client ID";
+    private static final String CLIENT_SECRET_PARAM = "Client Secret";
     private static final String HOST_PARAM = "API hostname";
     private static final String REDIRECT_PARAM = "Redirect URL";
     private static final String STORE_PARAM = "User Store";
@@ -48,13 +48,14 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
     private static final String SESSION_STATE = "duoState";
     private static final String CREDENTIAL_NAME_CODE = "duo_code";
     private static final String CREDENTIAL_NAME_STATE = "state";
+    private static final String KEY_USERNAME = "KEY_USERNAME";
 
     // Regex-syntax string, indicating the things to remove during sanitization of a string
     private static final String SANITIZING_PATTERN = "[^A-Za-z0-9_@.]";
 
     // Initialization parameters
-    String ikey = null;
-    String skey = null;
+    String client_id = null;
+    String client_secret = null;
     String host = null;
     String redirectUrl = null;
     Failmode failmode = Failmode.CLOSED;
@@ -70,11 +71,16 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
 
         LOGGER.log(Level.INFO, this.getClass().getName() + " initializing Duo Plugin " + JAR_VERSION);
         try {
-            this.ikey = (String) config.getParameter(IKEY_PARAM);
-            this.skey = (String) config.getParameter(SKEY_PARAM);
+            this.client_id = (String) config.getParameter(CLIENT_ID_PARAM);
+            this.client_secret = (String) config.getParameter(CLIENT_SECRET_PARAM);
             this.host = (String) config.getParameter(HOST_PARAM);
             this.redirectUrl = (String) config.getParameter(REDIRECT_PARAM);
-            this.failmode = this.determineFailmode(config.getParameter(FAILMODE));
+            if (this.redirectUrl == null || this.redirectUrl.equals("")) {
+                LOGGER.log(Level.SEVERE, "Empty Redirect URL Parameter was provided");
+                throw new IllegalArgumentException("Empty Redirect URL Parameter");
+            }
+
+            this.failmode = determineFailmode(config.getParameter(FAILMODE));
             String configuredStore = (String) config.getParameter(STORE_PARAM);
             if (configuredStore != null && !configuredStore.equals("")) {
                 LOGGER.log(Level.CONFIG, "Duo Plugin is using custom User Store " + configuredStore);
@@ -83,7 +89,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
                 LOGGER.log(Level.CONFIG, "Duo Plugin is using default User Store");
             }
 
-            this.duoClient = new Client(this.ikey, this.skey, this.host, this.redirectUrl);
+            this.duoClient = new Client(this.client_id, this.client_secret, this.host, this.redirectUrl);
             this.duoClient.appendUserAgentInfo(getUserAgent());
         } catch (Exception error) {
             LOGGER.log(Level.SEVERE,
@@ -423,14 +429,14 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
     private String getUserName(final AuthenticationContext context) {
         String userName = null;
 
-        CredentialParam param = context.getCredential().getParam("KEY_USERNAME");
+        CredentialParam param = context.getCredential().getParam(KEY_USERNAME);
 
         if (param != null) {
             userName = (String) param.getValue();
         }
 
         if ((userName == null) || (userName.length() == 0)) {
-            userName = context.getStringAttribute("KEY_USERNAME");
+            userName = context.getStringAttribute(KEY_USERNAME);
         }
 
         return userName;

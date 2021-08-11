@@ -18,10 +18,9 @@ public class DuoPluginConfigTest {
     public void setUp() {
         duoPlugin = new DuoPlugin();
         duoPlugin.username = "tester";
-        duoPlugin.ikey = "DIXXXXXXXXXXXXXXXXXX";
-        duoPlugin.skey = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
+        duoPlugin.client_id = "DIXXXXXXXXXXXXXXXXXX";
+        duoPlugin.client_secret = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
         duoPlugin.host = "fakehosturl";
-        // duoPlugin.failmode = "secure";
     }
 
     @Test

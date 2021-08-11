@@ -59,9 +59,6 @@ public class DuoPluginPhase2Test {
         Mockito.when(duoPlugin.getStateFromRequest(isA(AuthenticationContext.class))).thenReturn(GOOD_STATE);
         Mockito.when(duoPlugin.getStateFromSession(isA(AuthenticationContext.class))).thenReturn(BAD_STATE);
 
-        // Call the real Phase 2 method
-        Mockito.when(duoPlugin.handlePhase2(isA(AuthenticationContext.class), isA(Client.class), isA(CredentialParam.class))).thenCallRealMethod();
-
         // Phase 2 should return FAILURE when the states don't match
         ExecutionStatus result = duoPlugin.handlePhase2(context, duoPlugin.duoClient, GOOD_PARAM);
         assertEquals(ExecutionStatus.FAILURE, result);
