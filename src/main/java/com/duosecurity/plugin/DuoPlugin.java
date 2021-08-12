@@ -38,7 +38,7 @@ import com.duosecurity.model.Token;
 
 public class DuoPlugin extends AbstractAuthenticationPlugIn {
 
-    private static final String JAR_VERSION = "0.6.0";
+    private static final String JAR_VERSION = "1.0.0";
     private static final String CLIENT_ID_PARAM = "Client ID";
     private static final String CLIENT_SECRET_PARAM = "Client Secret";
     private static final String HOST_PARAM = "API hostname";
