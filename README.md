@@ -1,5 +1,11 @@
 # Overview
 
+[![Build Status](https://github.com/duosecurity/duo_universal_oam/workflows/Build%20and%20Test%20with%20Maven/badge.svg)](https://github.com/duosecurity/duo_universal_oam/actions)
+[![Issues](https://img.shields.io/github/issues/duosecurity/duo_universal_oam)](https://github.com/duosecurity/duo_universal_oam/issues)
+[![Forks](https://img.shields.io/github/forks/duosecurity/duo_universal_oam)](https://github.com/duosecurity/duo_universal_oam/network/members)
+[![Stars](https://img.shields.io/github/stars/duosecurity/duo_universal_oam)](https://github.com/duosecurity/duo_universal_oam/stargazers)
+[![License](https://img.shields.io/badge/License-View%20License-orange)](https://github.com/duosecurity/duo_universal_oam/blob/master/LICENSES/BSD-3-Clause.txt)
+
 Duo two-factor authentication plugin for Oracle Access Manager with the Duo Universal Prompt.
 
 # Usage
