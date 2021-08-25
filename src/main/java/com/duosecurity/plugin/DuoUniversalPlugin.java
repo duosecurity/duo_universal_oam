@@ -36,7 +36,7 @@ import oracle.security.am.engines.common.identity.provider.UserIdentityProviderF
 import com.duosecurity.Client;
 import com.duosecurity.model.Token;
 
-public class DuoPlugin extends AbstractAuthenticationPlugIn {
+public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
 
     private static final String JAR_VERSION = "1.0.0";
     private static final String CLIENT_ID_PARAM = "Client ID";
@@ -358,7 +358,7 @@ public class DuoPlugin extends AbstractAuthenticationPlugIn {
 
     @Override
     public String getPluginName() {
-        return "DuoPlugin";
+        return "DuoUniversalPlugin";
     }
 
 

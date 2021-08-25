@@ -20,7 +20,7 @@
     </dependencySets>
     <files>
         <file>
-            <source>./src/main/resources/DuoPlugin.xml</source>
+            <source>./src/main/resources/DuoUniversalPlugin.xml</source>
             <outputDirectory>/</outputDirectory>
         </file>
     </files>

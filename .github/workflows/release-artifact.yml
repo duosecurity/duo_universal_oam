@@ -37,6 +37,6 @@ jobs:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
          with:
            upload_url: ${{ steps.create_release.outputs.upload_url }}
-           asset_path: target/DuoPlugin.jar
-           asset_name: DuoPlugin.jar
+           asset_path: target/DuoUniversalPlugin.jar
+           asset_name: DuoUniversalPlugin.jar
            asset_content_type: application/java-archive

@@ -11,52 +11,52 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DuoPluginConfigTest {
-    DuoPlugin duoPlugin;
+public class DuoUniversalPluginConfigTest {
+    DuoUniversalPlugin duoUniversalPlugin;
 
     @BeforeEach
     public void setUp() {
-        duoPlugin = new DuoPlugin();
-        duoPlugin.username = "tester";
-        duoPlugin.client_id = "DIXXXXXXXXXXXXXXXXXX";
-        duoPlugin.client_secret = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
-        duoPlugin.host = "fakehosturl";
+        duoUniversalPlugin = new DuoUniversalPlugin();
+        duoUniversalPlugin.username = "tester";
+        duoUniversalPlugin.client_id = "DIXXXXXXXXXXXXXXXXXX";
+        duoUniversalPlugin.client_secret = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
+        duoUniversalPlugin.host = "fakehosturl";
     }
 
     @Test
     public void testGetDescription() {
-        String ret_description = duoPlugin.getDescription();
+        String ret_description = duoUniversalPlugin.getDescription();
         String description = "Duo Security's Plugin to allow users to 2FA with Duo";
         assertEquals(description, ret_description);
     }
 
     @Test
     public void testGetMonitoringData() {
-        Map data = duoPlugin.getMonitoringData();
+        Map data = duoUniversalPlugin.getMonitoringData();
         assertNull(data);
     }
 
     @Test
     public void testGetMonitoringStatus() {
-        boolean data = duoPlugin.getMonitoringStatus();
+        boolean data = duoUniversalPlugin.getMonitoringStatus();
         assertFalse(data);
     }
 
     @Test
     public void testGetPluginName() {
-        String data = duoPlugin.getPluginName();
-        assertEquals(data, "DuoPlugin");
+        String data = duoUniversalPlugin.getPluginName();
+        assertEquals(data, "DuoUniversalPlugin");
     }
 
     @Test
     public void testGetRevision() {
-        int data = duoPlugin.getRevision();
+        int data = duoUniversalPlugin.getRevision();
         assertEquals(data, 0);
     }
 
     @Test
     public void testGetUserAgent() {
-        String ua = duoPlugin.getUserAgent();
+        String ua = duoUniversalPlugin.getUserAgent();
         assertNotNull(ua);
         assertTrue(ua.toLowerCase().contains("duo_universal_oam/"));
         assertTrue(ua.toLowerCase().contains("java.version"));

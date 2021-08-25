@@ -7,13 +7,13 @@ package com.duosecurity.plugin;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DuoPluginLogSanitizationTest {
+public class DuoUniversalPluginLogSanitizationTest {
     @Test
     public void testSanitizeEmailInputUnchanged() {
         String testString = "a_good_user@example.com";
         String expectedResult = testString;
 
-        String actualResult = DuoPlugin.sanitizeForLogging(testString);
+        String actualResult = DuoUniversalPlugin.sanitizeForLogging(testString);
 
         assertEquals(expectedResult, actualResult);
     }
@@ -23,7 +23,7 @@ public class DuoPluginLogSanitizationTest {
         String testString = "agooduser001";
         String expectedResult = testString;
 
-        String actualResult = DuoPlugin.sanitizeForLogging(testString);
+        String actualResult = DuoUniversalPlugin.sanitizeForLogging(testString);
 
         assertEquals(expectedResult, actualResult);
     }
@@ -33,7 +33,7 @@ public class DuoPluginLogSanitizationTest {
         String testString = "JamesBond007";
         String expectedResult = testString;
 
-        String actualResult = DuoPlugin.sanitizeForLogging(testString);
+        String actualResult = DuoUniversalPlugin.sanitizeForLogging(testString);
 
         assertEquals(expectedResult, actualResult);
     }
@@ -43,7 +43,7 @@ public class DuoPluginLogSanitizationTest {
         String testString = "One\nTwo\nThree";
         String expectedResult = "OneTwoThree";
 
-        String actualResult = DuoPlugin.sanitizeForLogging(testString);
+        String actualResult = DuoUniversalPlugin.sanitizeForLogging(testString);
 
         assertEquals(expectedResult, actualResult);
     }
@@ -53,7 +53,7 @@ public class DuoPluginLogSanitizationTest {
         String testString = "One:Two\\Three:Four#Five*Six@Seven;";
         String expectedResult = "OneTwoThreeFourFiveSix@Seven";
 
-        String actualResult = DuoPlugin.sanitizeForLogging(testString);
+        String actualResult = DuoUniversalPlugin.sanitizeForLogging(testString);
 
         assertEquals(expectedResult, actualResult);
     }
@@ -63,7 +63,7 @@ public class DuoPluginLogSanitizationTest {
         String testString = null;
         String expectedResult = "";
 
-        String actualResult = DuoPlugin.sanitizeForLogging(testString);
+        String actualResult = DuoUniversalPlugin.sanitizeForLogging(testString);
 
         assertEquals(expectedResult, actualResult);
     }

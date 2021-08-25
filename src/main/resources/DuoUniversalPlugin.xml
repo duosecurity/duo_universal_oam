@@ -1,4 +1,4 @@
-<Plugin name="DuoPlugin" type="Authentication">
+<Plugin name="DuoUniversalPlugin" type="Authentication">
   <author>Duo Security</author>
   <email>support@duosecurity.com</email>
   <creationDate>12:00:00 2021-01-20</creationDate>
