@@ -12,6 +12,10 @@ Duo two-factor authentication plugin for Oracle Access Manager with the Duo Univ
 
 Installation documentation can be found at <https://duo.com/docs/oam>.
 
+## TLS 1.2 and 1.3 Support
+
+Duo_universal_oam uses the Java cryptography libraries for TLS operations. Both TLS 1.2 and 1.3 are supported by Java 8 and later versions.
+
 # Development
 ## Prerequisites
  - Java JDK 8
