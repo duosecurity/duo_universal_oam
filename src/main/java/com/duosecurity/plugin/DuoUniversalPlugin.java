@@ -89,8 +89,9 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
                 LOGGER.log(Level.CONFIG, "Duo Plugin is using default User Store");
             }
 
-            this.duoClient = new Client(this.client_id, this.client_secret, this.host, this.redirectUrl);
-            this.duoClient.appendUserAgentInfo(getUserAgent());
+            this.duoClient = new Client.Builder(this.client_id, this.client_secret, this.host, this.redirectUrl)
+                                       .appendUserAgentInfo(getUserAgent())
+                                       .build();
         } catch (Exception error) {
             LOGGER.log(Level.SEVERE,
                        "Error initializing Duo plugin",
