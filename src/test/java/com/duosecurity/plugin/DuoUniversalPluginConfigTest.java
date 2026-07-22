@@ -64,5 +64,35 @@ public class DuoUniversalPluginConfigTest {
         assertTrue(ua.toLowerCase().contains("os.arch"));
         assertTrue(ua.toLowerCase().contains("os.version"));
     }
+
+    @Test
+    public void testDetermineCaPinningDisabledNull() {
+        assertFalse(DuoUniversalPlugin.determineCaPinningDisabled(null));
+    }
+
+    @Test
+    public void testDetermineCaPinningDisabledNonString() {
+        assertFalse(DuoUniversalPlugin.determineCaPinningDisabled(Integer.valueOf(1)));
+    }
+
+    @Test
+    public void testDetermineCaPinningDisabledFalse() {
+        assertFalse(DuoUniversalPlugin.determineCaPinningDisabled("false"));
+    }
+
+    @Test
+    public void testDetermineCaPinningDisabledNonsense() {
+        assertFalse(DuoUniversalPlugin.determineCaPinningDisabled("not a boolean"));
+    }
+
+    @Test
+    public void testDetermineCaPinningDisabledTrue() {
+        assertTrue(DuoUniversalPlugin.determineCaPinningDisabled("true"));
+    }
+
+    @Test
+    public void testDetermineCaPinningDisabledTrueMixedCase() {
+        assertTrue(DuoUniversalPlugin.determineCaPinningDisabled("True"));
+    }
 }
 
