@@ -46,5 +46,12 @@
         <globalUIOverride>true</globalUIOverride>
         <value></value>
     </AttributeValuePair>
+    <AttributeValuePair>
+        <Attribute type="string" length="5">Disable CA Pinning</Attribute>
+        <mandatory>false</mandatory>
+        <instanceOverride>false</instanceOverride>
+        <globalUIOverride>true</globalUIOverride>
+        <value></value>
+    </AttributeValuePair>
   </configuration>
 </Plugin>

@@ -45,6 +45,7 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
     private static final String REDIRECT_PARAM = "Redirect URL";
     private static final String STORE_PARAM = "User Store";
     private static final String FAILMODE = "Fail mode";
+    private static final String DISABLE_CA_PINNING_PARAM = "Disable CA Pinning";
     private static final String SESSION_STATE = "duoState";
     private static final String CREDENTIAL_NAME_CODE = "duo_code";
     private static final String CREDENTIAL_NAME_STATE = "state";
@@ -59,6 +60,7 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
     String host = null;
     String redirectUrl = null;
     Failmode failmode = Failmode.CLOSED;
+    boolean disableCaPinning = false;
     String userStore = null;
 
     Client duoClient;
@@ -81,6 +83,7 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
             }
 
             this.failmode = determineFailmode(config.getParameter(FAILMODE));
+            this.disableCaPinning = determineCaPinningDisabled(config.getParameter(DISABLE_CA_PINNING_PARAM));
             String configuredStore = (String) config.getParameter(STORE_PARAM);
             if (configuredStore != null && !configuredStore.equals("")) {
                 LOGGER.log(Level.CONFIG, "Duo Plugin is using custom User Store " + configuredStore);
@@ -89,9 +92,13 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
                 LOGGER.log(Level.CONFIG, "Duo Plugin is using default User Store");
             }
 
-            this.duoClient = new Client.Builder(this.client_id, this.client_secret, this.host, this.redirectUrl)
-                                       .appendUserAgentInfo(getUserAgent())
-                                       .build();
+            Client.Builder clientBuilder = new Client.Builder(this.client_id, this.client_secret, this.host, this.redirectUrl)
+                                       .appendUserAgentInfo(getUserAgent());
+            if (this.disableCaPinning) {
+                clientBuilder.disableCaPinning();
+                LOGGER.log(Level.WARNING, "CA pinning is disabled. TLS connections will validate against the default trust store.");
+            }
+            this.duoClient = clientBuilder.build();
         } catch (Exception error) {
             LOGGER.log(Level.SEVERE,
                        "Error initializing Duo plugin",
@@ -102,6 +109,18 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
         LOGGER.log(Level.CONFIG, "Duo Plugin fail mode is set to fail " + (this.failmode == Failmode.CLOSED ? "closed" : "open"));
 
         return ExecutionStatus.SUCCESS;
+    }
+
+    static boolean determineCaPinningDisabled(Object configParam) {
+        if (configParam == null) {
+            return false;
+        }
+
+        if (!(configParam instanceof String)) {
+            return false;
+        }
+
+        return "true".equalsIgnoreCase((String) configParam);
     }
 
     static Failmode determineFailmode(Object configParam) {
