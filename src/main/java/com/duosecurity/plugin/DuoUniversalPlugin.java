@@ -39,6 +39,7 @@ import com.duosecurity.model.Token;
 public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
 
     private static final String JAR_VERSION = "2.1.0";
+    private static final String CA_BUNDLE_VERSION = "1.0";
     private static final String CLIENT_ID_PARAM = "Client ID";
     private static final String CLIENT_SECRET_PARAM = "Client Secret";
     private static final String HOST_PARAM = "API hostname";
@@ -93,7 +94,7 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
             }
 
             Client.Builder clientBuilder = new Client.Builder(this.client_id, this.client_secret, this.host, this.redirectUrl)
-                                       .appendUserAgentInfo(getUserAgent());
+                                       .appendUserAgentInfo(getUserAgent(this.disableCaPinning));
             if (this.disableCaPinning) {
                 clientBuilder.disableCaPinning();
                 LOGGER.log(Level.WARNING, "CA pinning is disabled. TLS connections will validate against the default trust store.");
@@ -470,7 +471,7 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
         }
     }
 
-    static String getUserAgent() {
+    static String getUserAgent(boolean caPinningDisabled) {
         String userAgent = "duo_universal_oam/jar " + JAR_VERSION  + " (";
 
         userAgent = addKeyValueToUserAgent(userAgent, "java.version") + "; ";
@@ -479,6 +480,9 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
         userAgent = addKeyValueToUserAgent(userAgent, "os.version");
 
         userAgent += ")";
+
+        userAgent += " ca_bundle/" + CA_BUNDLE_VERSION
+                     + " (ca_pinning=" + (caPinningDisabled ? "disabled" : "enabled") + ")";
 
         return userAgent;
     }

@@ -56,13 +56,39 @@ public class DuoUniversalPluginConfigTest {
 
     @Test
     public void testGetUserAgent() {
-        String ua = duoUniversalPlugin.getUserAgent();
+        String ua = duoUniversalPlugin.getUserAgent(false);
         assertNotNull(ua);
         assertTrue(ua.toLowerCase().contains("duo_universal_oam/"));
         assertTrue(ua.toLowerCase().contains("java.version"));
         assertTrue(ua.toLowerCase().contains("os.name"));
         assertTrue(ua.toLowerCase().contains("os.arch"));
         assertTrue(ua.toLowerCase().contains("os.version"));
+    }
+
+    @Test
+    public void testGetUserAgentIncludesCaBundleVersion() {
+        assertTrue(duoUniversalPlugin.getUserAgent(false).contains("ca_bundle/1.0"));
+        assertTrue(duoUniversalPlugin.getUserAgent(true).contains("ca_bundle/1.0"));
+    }
+
+    @Test
+    public void testGetUserAgentCaPinningEnabled() {
+        String ua = duoUniversalPlugin.getUserAgent(false);
+        assertTrue(ua.contains("(ca_pinning=enabled)"));
+        assertFalse(ua.contains("(ca_pinning=disabled)"));
+    }
+
+    @Test
+    public void testGetUserAgentCaPinningDisabled() {
+        String ua = duoUniversalPlugin.getUserAgent(true);
+        assertTrue(ua.contains("(ca_pinning=disabled)"));
+        assertFalse(ua.contains("(ca_pinning=enabled)"));
+    }
+
+    @Test
+    public void testGetUserAgentFieldOrder() {
+        String ua = duoUniversalPlugin.getUserAgent(false);
+        assertTrue(ua.endsWith(" ca_bundle/1.0 (ca_pinning=enabled)"));
     }
 
     @Test
