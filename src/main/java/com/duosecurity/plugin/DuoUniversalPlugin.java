@@ -46,6 +46,9 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
     private static final String STORE_PARAM = "User Store";
     private static final String FAILMODE = "Fail mode";
     private static final String DISABLE_CA_PINNING_PARAM = "Disable CA Pinning";
+    // Must be kept in sync with CA_BUNDLE_VERSION in duo-universal-sdk.
+    // Ideally the SDK would expose this via a public getter (e.g. Client.getCaBundleVersion()).
+    private static final String CA_BUNDLE_VERSION = "1.0";
     private static final String SESSION_STATE = "duoState";
     private static final String CREDENTIAL_NAME_CODE = "duo_code";
     private static final String CREDENTIAL_NAME_STATE = "state";
@@ -106,6 +109,7 @@ public class DuoUniversalPlugin extends AbstractAuthenticationPlugIn {
             throw new IllegalArgumentException("Could not initialize Duo Plugin with provided parameters");
         }
 
+        LOGGER.log(Level.INFO, "Duo Plugin CA bundle version: " + CA_BUNDLE_VERSION);
         LOGGER.log(Level.CONFIG, "Duo Plugin fail mode is set to fail " + (this.failmode == Failmode.CLOSED ? "closed" : "open"));
 
         return ExecutionStatus.SUCCESS;
